@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opportunity Hub</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0000ff">
+
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#eef2f7;}
+.dark{background:#0f172a;color:#fff;}
+
+.header{
+  background:linear-gradient(90deg,#075E54,#0b8f7a);
+  color:#fff;padding:12px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+
+.screen{display:none;padding:12px;padding-bottom:80px;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.card{
+  background:#fff;padding:12px;border-radius:12px;
+  text-align:center;font-size:12px;cursor:pointer;
+}
+
+.card i{
+  display:block;font-size:22px;margin-bottom:6px;color:#075E54;
+}
+
+.dark .card{background:#1e293b;color:#fff;}
+.dark .card i{color:#38bdf8;}
+
+.nav{
+  position:fixed;bottom:0;width:100%;
+  display:flex;background:#fff;z-index:9999;
+}
+.nav button{flex:1;padding:12px;border:none;}
+
+input,textarea{width:100%;padding:10px;margin:5px 0;}
+button{padding:10px;background:#075E54;color:#fff;border:none;}
+.chatBox{height:150px;overflow:auto;background:#fff;padding:10px;border-radius:10px;}
+.card {
+  padding: 15px;
+  border-radius: 12px;
+  background: white;
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.dark {
+  background: #121212;
+  color: white;
+}
+.card {
+  background: linear-gradient(145deg,#ffffff,#e6e6e6);
+  border-radius: 16px;
+  padding: 15px;
+  text-align:center;
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+
+button {
+  border-radius: 8px;
+  cursor:pointer;
+}
+input {
+  width: 80%;
+  padding: 10px;
+  margin: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+.header{
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 9999;
+}
+#cvPreview{
+  font-family: Arial;
+  line-height:1.5;
+}
+
+#cvPreview h1{
+  font-size:24px;
+}
+
+#cvPreview h3{
+  margin-top:15px;
+  color:#0a84ff;
+}
+
+#cvPreview{
+  max-width: 800px;
+  margin:auto;
+}
+.screen {
+  display:none;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity:0; transform: translateY(10px);}
+  to {opacity:1; transform: translateY(0);}
+}
+
+button {
+  transition: 0.2s;
+}
+
+button:active {
+  transform: scale(0.95);
+  background:#054c45;
+}
+
+.spinner {
+  width:40px;
+  height:40px;
+  border:4px solid #ccc;
+  border-top:4px solid #075E54;
+  border-radius:50%;
+  animation: spin 1s linear infinite;
+  margin:auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#notification {
+  animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+  from {transform: translateX(100%);}
+  to {transform: translateX(0);}
+}
+
+
+showNotification("⚡ Generating your professional CV...");
+
+</style>
+</head>
+
+<body>
+<div id="loading" style="text-align:center;padding:50px;">
+  🚀 Loading Opportunity Hub...
+</div>
+<button onclick="toggleDark()" style="position:fixed;top:10px;right:10px;z-index:999;">
+🌙
+</button>
+
+🚀 Opportunity Hub  
+<div style="font-size:11px;">
+  by Hopewell Digital | Mzuzile Msuthu
+</div>
+
+
+<!-- AUTH -->
+<div id="auth" style="padding:20px;text-align:center;">
+  <h2>Login</h2>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  
+ <h2>📝 Register</h2>
+
+<input type="text" id="regName" placeholder="Full Name"><br>
+<input type="email" id="regEmail" placeholder="Email"><br>
+<input type="password" id="regPassword" placeholder="Password"><br>
+
+<button onclick="registerUser()">Register</button>
+
+<p id="regMessage"></p>
+
+
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+
+  <div id="chats" class="screen">
+    <h3>🔥 Jobs</h3>
+    <div id="jobs"></div>
+
+    <h3>🤖 AI Assistant</h3>
+    <div id="chatBox" class="chatBox"></div>
+    <input id="msg" placeholder="Ask something...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+  
+  <div id="adminPanel" style="display:none;padding:15px;background:#111;color:#fff;">
+  <h3>🔐 Admin Panel</h3>
+
+  <input id="jobName" placeholder="Job Name">
+  <input id="jobLink" placeholder="Job Link">
+  <button onclick="addJob()">➕ Add Job</button>
+
+  <input id="tenderName" placeholder="Tender Name">
+  <input id="tenderLink" placeholder="Tender Link">
+  <button onclick="addTender()">➕ Add Tender</button>
+</div>
+<div id="adminPanel" style="display:none; padding:10px;">
+  <h2>Admin Dashboard</h2>
+
+  <div class="grid">
+
+    <div class="card">
+      <h3>Jobs</h3>
+      <button onclick="showAdminSection('jobs')">Manage Jobs</button>
+    </div>
+
+    <div class="card">
+      <h3>Tenders</h3>
+      <button onclick="showAdminSection('tenders')">Manage Tenders</button>
+    </div>
+
+    <div class="card">
+      <h3>Side Hustles</h3>
+      <button onclick="showAdminSection('hustles')">Manage Hustles</button>
+    </div>
+
+  </div>
+
+  <div id="adminPanel2">></div>
+</div>
+<div class="card">
+  Jobs: <span id="jobCount">0</span>
+</div>
+<div class="card">
+  Tenders: <span id="tenderCount">8</span>
+</div>
+<div class="card">
+  Hustles: <span id="hustleCount">2</span>
+</div>
+<h3>📊 Analytics</h3>
+<div id="analyticsBox"></div>
+<button onclick="loadAnalytics()">Load Analytics</button>
+
+<input id="searchInput" placeholder="Search jobs..." onkeyup="searchJobs()">
+
+
+  <div id="tools" class="screen"></div>
+  <div id="tenders" class="screen"></div>
+  <div id="side" class="screen"></div>
+  <div id="services" class="screen"></div>
+  <div id="saved" class="screen"></div>
+
+  <div class="nav">
+    <button onclick="showTab('chats')">💼 Jobs</button>
+    
+<button onclick="showTab('tools')">📄 CV Tools</button>
+
+   <button onclick="showTab('tenders')">Tenders📊</button>
+    <button onclick="showTab('side')">side💻</button>
+<button onclick="showTab('services')">services☕</button>
+    <button onclick="showTab('saved')">⭐</button>
+  </div>
+
+</div>
+   
+<div id="notification" style="position:fixed;top:10px;right:10px;background:#0a84ff;color:white;padding:10px;border-radius:8px;display:none;">
+  New update available!
+</div>
+<footer style="text-align:center;margin-top:40px;padding:20px;background:#111;color:#fff;">
+  © 2026 Opportunity Hub. All Rights Reserved. <br>
+  Developed by Hopewell Digital | Mzuzile Msuthu
+</footer>
+<p style="text-align:center;font-size:12px;color:gray;">
+  Unauthorized copying, reproduction, or distribution of this platform is strictly prohibited.
+</p>
+
+
+
+
+<div id="dashboard" style="display:none;">
+  <h2>Welcome, User 👋</h2>
+  <p>Your Opportunities Hub Dashboard</p>
+
+  <ul>
+    <li>📌 Saved Opportunities</li>
+    <li>💼 My Applications</li>
+    <li>💰 Side Hustles</li>
+  </ul>
+</div>
+<div id="sideHustles">
+  <h2>💰 Make Money Online</h2>
+
+  <a href="https://invite-poppo.com/xjCtej" target="_blank">
+    🔥 Poppo Live (Earn while chatting)
+  </a><br><br>
+
+  <a href="https://reinbowapp.com/share/?action=profile&id=3067369" target="_blank">
+    💎 Reinbow App
+  </a>
+</div>
+<p style="color:red;text-align:center;">
+  🔥 Limited Offer: Get your website this week and pay 50% deposit!
+</p>
+
+<div id="cvOutput"></div>
+
+
+
+    <div id="cvPreview"></div>
+    
+    
+    <button onclick="copyCV()">📋 Copy CV</button>
+    
+    <button onclick="analyzeJob()">🤖 AI Optimize CV</button>
+
+<div id="loading">
+  <div class="spinner"></div>
+</div>
+
+
+<button onclick="generateCV()">Generate CV</button>
+<button onclick="downloadCV()">Download CV</button>
+
+
+<script>
+// FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyB9xd2vj4w3jth45jqQrlBypxGm1-yajxk",
+  authDomain: "opportunity-hub-bd7c9.firebaseapp.com",
+  databaseURL: "https://opportunity-hub-bd7c9-default-rtdb.firebaseio.com",
+  projectId: "opportunity-hub-bd7c9",
+  storageBucket: "opportunity-hub-bd7c9.appspot.com",
+  messagingSenderId: "400465997821",
+  appId: "1:400465997821:web:df8ce38683656252787394"
+};
+
+
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.database();
+function addJob(){
+  let name = document.getElementById("jobName").value;
+  let link = document.getElementById("jobLink").value;
+
+  db.ref("jobs").push({
+    name:name,
+    link:link
+  });
+
+  alert("Job added 🔥");
+}
+
+
+function showNotification(message){
+  const notif = document.getElementById("notification");
+  notif.innerText = message;
+  notif.style.display = "block";
+
+  setTimeout(() => {
+    notif.style.display = "none";
+  }, 3000);
+}
+
+// Example trigger
+showNotification("🔥 New opportunities added!");
+
+function addTender(){
+  let name = document.getElementById("tenderName").value;
+  let link = document.getElementById("tenderLink").value;
+
+  db.ref("tenders").push({
+    name,
+    link,
+    createdAt: Date.now()
+  });
+
+  alert("Tender added ✅");
+}
+
+function addHustle(){
+  let name = document.getElementById("hustleName").value;
+  let link = document.getElementById("hustleLink").value;
+
+  db.ref("hustles").push({
+    name,
+    link,
+    createdAt: Date.now()
+  });
+
+  alert("Hustle added 💰");
+}
+// ELEMENTS
+const authDiv = document.getElementById("auth");
+const appDiv = document.getElementById("app");
+const msg = document.getElementById("msg");
+const tools = document.getElementById("tools");
+const tenders = document.getElementById("tenders");
+const saved = document.getElementById("saved");
+
+
+
+
+function login(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  auth.signInWithEmailAndPassword(email,password)
+    .then(()=>alert("Login 🔥"))
+    .catch(e=>alert(e.message));
+}
+
+
+// STATE
+auth.onAuthStateChanged(user=>{
+  if(user){
+    authDiv.style.display="none";
+    appDiv.style.display="block";
+    document.getElementById("dashboard").style.display = "block";
+    showTab("chats");
+  }else{
+    authDiv.style.display="block";
+    appDiv.style.display="none";
+  }
+});
+
+// NAV
+function showTab(tab){
+  document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
+
+  let page = document.getElementById(tab);
+  if(page) page.style.display="block";
+
+  if(tab==="chats") renderJobs();
+  if(tab==="tools") renderTools();
+  if(tab==="tenders") renderTenders();
+  if(tab==="side") renderSide();
+  if(tab==="services") renderServices();
+  if(tab==="saved") loadSavedJobs();
+}
+
+
+// JOBS
+
+let jobsList = [
+  {name:"SA Youth", link:"https://sayouth.mobi", icon:"fa-briefcase"},
+  {name:"Indeed", link:"https://za.indeed.com", icon:"fa-search"},
+  {name:"PNet", link:"https://www.pnet.co.za", icon:"fa-globe"},
+  {name:"LinkedIn", link:"https://linkedin.com/jobs", icon:"fa-linkedin"},
+  {name:"CareerJunction", link:"https://careerjunction.co.za", icon:"fa-building"},
+  {name:"Glassdoor", link:"https://glassdoor.com", icon:"fa-chart-line"},
+  {name:"Government Jobs", link:"https://gov.za", icon:"fa-landmark"},
+  {name:"Transnet", link:"https://transnet.net", icon:"fa-train"},
+  {name:"Eskom", link:"https://eskom.co.za", icon:"fa-bolt"},
+  {name:"Shoprite", link:"https://shoprite.co.za", icon:"fa-cart-shopping"},
+  {name:"Pick n Pay", link:"https://pnp.co.za", icon:"fa-cart-plus"},
+  {name:"Sasol", link:"https://sasol.com", icon:"fa-industry"},
+  {name:"Standard Bank", link:"https://standardbank.com", icon:"fa-university"},
+  {name:"Capitec", link:"https://capitecbank.co.za", icon:"fa-credit-card"}
+];
+function renderJobs(){
+  const box = document.getElementById("jobs");
+
+  if(!box){
+    console.log("Jobs container missing ❌");
+    return;
+  }
+
+  box.innerHTML = `<div class="grid" id="jobsGrid"></div>`;
+  const grid = document.getElementById("jobsGrid");
+
+  // First show fallback immediately (so UI is never empty)
+  jobsList.forEach(j=>{
+    grid.innerHTML += `
+      <div class="card" onclick="window.open('${j.link}')">
+        <i class="fas ${j.icon}"></i>
+        <div>${j.name}</div>
+      </div>
+    `;
+  });
+
+  // Then try Firebase (if available)
+  db.ref("jobs").once("value")
+    .then(snap=>{
+      if(snap.exists()){
+        grid.innerHTML = ""; // clear fallback
+
+        snap.forEach(child=>{
+          let j = child.val();
+
+          grid.innerHTML += `
+            <div class="card" onclick="window.open('${j.link}')">
+              <i class="fas fa-briefcase"></i>
+              <div>${j.name}</div>
+            </div>
+          `;
+        });
+
+        showNotification("🔥 Live jobs loaded from Firebase");
+      }
+    })
+    .catch(err=>{
+      console.log("Firebase load failed, using local jobs", err);
+    });
+}
+
+// CHAT
+function sendMessage(){
+
+  let input = document.getElementById("msg");
+  let chatBox = document.getElementById("chatBox");
+
+  let userMsg = input.value.toLowerCase();
+
+  chatBox.innerHTML += `<div style="text-align:right;">${input.value}</div>`;
+
+  let response = "🤖 I’m here to help!";
+
+  if(userMsg.includes("cv")){
+    response = "📄 I can help you build a professional CV. Go to Tools → CV Builder.";
+  }
+
+  else if(userMsg.includes("job")){
+    response = "💼 I recommend checking Jobs tab and optimizing your CV with AI.";
+  }
+
+  else if(userMsg.includes("money")){
+    response = "💰 Try Side Hustles tab to start earning online.";
+  }
+
+  else if(userMsg.includes("improve cv")){
+    response = "🚀 Use AI Optimize CV feature to match your CV with job requirements.";
+  }
+
+  else if(userMsg.includes("apply")){
+    response = "⚡ Use Smart Apply: open job, copy CV, paste and apply quickly.";
+  }
+
+  setTimeout(()=>{
+    chatBox.innerHTML += `<div>${response}</div>`;
+  },500);
+
+  input.value="";
+}
+
+
+
+
+// TOOLS
+function renderTools(){
+  tools.innerHTML = `
+    <h3>📄 CV Tools</h3>
+    <div class="grid">
+
+      <div class="card" onclick="cvBuilder()">
+        <i class="fa-solid fa-file"></i>
+        CV Builder
+      </div>
+
+      <div class="card" onclick="generateCoverLetter()">
+        <i class="fa-solid fa-envelope"></i>
+        Cover Letter Generator
+      </div>
+
+      <div class="card" onclick="createPortfolio()">
+        <i class="fa-solid fa-id-card"></i>
+        Portfolio Creator
+      </div>
+
+      <div class="card" onclick="writeProposal()">
+        <i class="fa-solid fa-pen"></i>
+        Proposal Writer
+      </div>
+
+      <div class="card" onclick="interviewTips()">
+        <i class="fa-solid fa-user"></i>
+        Interview Tips
+      </div>
+
+      <div class="card" onclick="window.open('https://www.jobseeker.com/en/cv')">
+        <i class="fa-solid fa-globe"></i>
+        Online CV Builder
+      </div>
+
+    </div>
+  `;
+}
+function saveJob(name, link){
+  const user = auth.currentUser;
+  if(!user) return alert("Login first");
+
+  db.ref("saved/"+user.uid).push({
+    name:name,
+    link:link
+  });
+
+  alert("Saved ✅");
+}
+function loadSavedJobs(){
+  const user = auth.currentUser;
+  if(!user) return;
+
+  saved.innerHTML = "<h3>⭐ Saved Jobs</h3>";
+
+  db.ref("saved/"+user.uid).once("value", snap=>{
+    if(!snap.exists()){
+      saved.innerHTML += "<p>No saved jobs yet.</p>";
+      return;
+    }
+
+    snap.forEach(child=>{
+      let job = child.val();
+
+      saved.innerHTML += `
+        <div class="card">
+          ${job.name}
+          <button onclick="window.open('${job.link}')">Open</button>
+        </div>
+      `;
+    });
+  });
+}
+// TENDERS
+function renderTenders(){
+  tenders.innerHTML = `
+    <h3>📊 Tenders</h3>
+    <div class="grid">
+
+      <div class="card" onclick="window.open('https://etenders.treasury.gov.za')">
+        🇿🇦 eTenders
+      </div>
+
+      <div class="card" onclick="window.open('https://www.gov.za')">
+        🏛 Government
+      </div>
+
+      <div class="card">
+        🏗 Construction
+      </div>
+
+      <div class="card">
+        🍽 Catering
+      </div>
+
+      <div class="card">
+        🚚 Logistics
+      </div>
+
+      <div class="card">
+        🧹 Cleaning
+      </div>
+
+    </div>
+  `;
+}
+
+// SIDE HUSTLES (YOUR LINKS 🔥)
+function renderSide(){
+  let side = document.getElementById("side");
+
+  side.innerHTML = `
+  <h2>💰 Make Money Online</h2>
+  <p style="color:gray;">Start earning with these platforms</p>
+  <p style="text-align:center;font-weight:bold;">
+  Empowering Your Hustle. Building Your Future.
+</p>
+
+  <div class="grid">
+
+    <div class="card" onclick="trackHustle('Poppo','https://vp.poppolive.com/j6e2Gp')">
+      🎥 <b>Poppo Live</b><br>
+      <small>Earn while chatting</small>
+    </div>
+
+    <div class="card" onclick="trackHustle('Reinbow','https://reinbowapp.com/share/?action=profile&id=3067369')">
+            
+      💸 <b>Reinbow</b><br>
+      <small>Make money online</small>
+    </div>
+
+    <div class="card" onclick="trackHustle('Clear Blast','https://d151bfjamdgts5.cloudfront.net/cb/index_18.html?id=90966837')">
+      ⚡ <b>Clear Blast</b><br>
+      <small>Fast earning app</small>
+    </div>
+
+  
+  
+  <div class="card" onclick="trackHustle('Rewards11','https://play.google.com/store/apps/details?id=com.sayu.rewards11&referrer=utm_source%3Dref%26utm_medium%3DEvupXkWgROTIrAqvKOMvzqVw1U02%26anid%3Dadmob')">
+      ⚡ <b>Rewards11</b><br>
+      <small>earn money by taking surveys ,playing games</small>
+    </div>
+    
+  
+  
+   <div class="card" onclick="trackHustle('Clear Blast','https://sololearn.onelink.me/MfgO/y7yhvnxi')">
+      ⚡ <b>Sololearn</b><br>
+      <small>learn digital skills and get a certificate courses like html,css,javascript,python etc for free</small>
+    </div>
+
+  
+  
+  
+  <div class="card" onclick="trackHustle('Rewards11','https://www.userinterviews.com/r/xyktlzxxp')">
+      ⚡ <b>UserInterviews</b><br>
+      <small>earn money by taking surveys ,playing games</small>
+    </div>
+  
+  
+  
+  <div class="card" onclick="trackHustle('Rewards11','//https://agmza27.com/#/register/4995194 ,AGM//')">
+      ⚡ <b>Amtv</b><br>
+      <small>earn money by taking surveys ,playing games</small>
+    </div>
+  
+  
+ </div>
+  
+  
+  `;
+}
+// SERVICES (DETAILED MONEY SECTION 💰)
+function renderServices(){
+  let services = document.getElementById("services");
+
+  services.innerHTML = `
+  <h2 style="text-align:center;">💼 Our Premium Services</h2>
+  <p style="text-align:center;color:gray;">
+    Grow your business with professional digital solutions
+  </p>
+
+  <div class="grid">
+
+    <div class="card" onclick="contact('Business Website R1500')">
+      🌐 <b>Business Website</b><br>
+      <small>Modern, mobile-friendly</small><br>
+      <b style="color:green;">From R1500</b><br><br>
+      <button>Get Started</button>
+    </div>
+
+    <div class="card" onclick="contact('Personal Website R800')">
+      👤 <b>Personal Website</b><br>
+      <small>Portfolio & branding</small><br>
+      <b style="color:green;">From R800</b><br><br>
+      <button>Start Now</button>
+    </div>
+
+    <div class="card" onclick="contact('System Development R5000')">
+      ⚙️ <b>System Development</b><br>
+      <small>Custom apps & dashboards</small><br>
+      <b style="color:green;">From R5000</b><br><br>
+      <button>Build System</button>
+    </div>
+
+    <div class="card" onclick="contact('Company Registration R599')">
+      🏢 <b>Company Registration</b><br>
+      <small>CIPC fast & easy</small><br>
+      <b style="color:green;">R599</b><br><br>
+      <button>Register Now</button>
+    </div>
+
+    <div class="card" onclick="contact('Business Plan R599')">
+      📄 <b>Business Plan</b><br>
+      <small>Funding-ready plans</small><br>
+      <b style="color:green;">R599</b><br><br>
+      <button>Order Now</button>
+    </div>
+
+    <div class="card" onclick="contact('Funding Application Help R300')">
+      💰 <b>Funding Applications</b><br>
+      <small>NSFAS, grants, funding</small><br>
+      <b 
