@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opportunity Hub</title>  <!-- PWA -->  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0E3A8A">  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: white;
+      text-align: center;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: translate(-50%, -50%);
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .logo {
+      width: 120px;
+      margin-bottom: 20px;
+    }
+
+    h1 { font-size: 32px; }
+
+    .btn {
+      margin-top: 20px;
+      padding: 15px 25px;
+      background: linear-gradient(45deg, #FF7A00, #FFB347);
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: bold;
+    }
+
+    .mute-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .install-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0E3A8A;
+      padding: 12px 20px;
+      border-radius: 25px;
+      display: none;
+    }
+  </style></head><body>  <div class="video-container"><video id="bgVideo" autoplay muted loop playsinline>
+  <source src="video.mp4" type="video/mp4">
+</video>
+
+<div class="overlay">
+  <img src="https://i.imgur.com/7d5f4Ox.png" class="logo">
+
+  <h1>Unlock Opportunities.<br>Change Your Life.</h1>
+  <p>Find jobs, funding & ways to make money online — all in one app.</p>
+
+  <a href="https://startling-chaja-6d2e2f.netlify.app" class="btn">⬇ Download Now</a>
+</div>
+
+<div class="mute-btn" onclick="toggleSound()">🔇</div>
+
+  </div>  <div id="installBtn" class="install-btn">📲 Install App</div>  <script>
+    // SOUND CONTROL
+    function toggleSound() {
+      const video = document.getElementById('bgVideo');
+      video.muted = !video.muted;
+    }
+
+    // INSTALL PROMPT
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', () => {
+      installBtn.style.display = 'none';
+      deferredPrompt.prompt();
+    });
+
+    // SERVICE WORKER
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script></body>
+  </html>
